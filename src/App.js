@@ -73,20 +73,18 @@ class App extends Component {
     var followIndex = (index + 1) % this.state.response.total
     this.setState({following: this.state.response.items[followIndex].track.name})
     
-    //this._playSound(currentTrack.preview_url);
     console.log("playing " + currentTrack.name + " from " + currentTrack.artists[0].name)
   }
-
-  //_playSound = (url) => {
-  //  this.audio = new Audio(url);
-  //  this.audio.play()
-  //}
 
   render() {
     if (!this.state.response.total) { 
     //  return( <ActivityIndicator size="large" color="#0000ff" /> )
       return(<button className="App"
-      onClick = {()=>{window.location='http://localhost:8888/login'}}> Sign in to spotify </button>)
+      onClick = {
+        ()=>{
+          window.location= window.location.includes('localhost') ? 'http://localhost:8888/login' : 'http://blind-spotify.herokuapp.com/login'
+        }
+      }> Sign in to spotify </button>)
     }
 
     const index = this.state.index
