@@ -82,7 +82,7 @@ class App extends Component {
       return(<button className="App"
       onClick = {
         ()=>{
-          window.location= window.location.includes('localhost') ? 'http://localhost:8888/login' : 'http://blind-spotify.herokuapp.com/login'
+          window.location= window.location.href.indexOf("localhost") > -1 ? 'http://localhost:8888/login' : 'http://blind-spotify.herokuapp.com/login'
         }
       }> Sign in to spotify </button>)
     }
