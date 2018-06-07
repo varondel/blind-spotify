@@ -1,7 +1,3 @@
-body {
-  background-color: dimgray
-}
-
 .App {
   text-align: center;
 }
@@ -23,7 +19,22 @@ body {
 }
 
 .App-intro {
-  font-size: large;
+  font-size: 20px;
+  font-weight: 100
+}
+
+.App-Intro::after {
+  content: " ";
+  white-space: pre;
+}
+
+.Button {
+  font-size: 17px;
+  background-color: #0bc94d;
+  color: white;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
 }
 
 @keyframes App-logo-spin {

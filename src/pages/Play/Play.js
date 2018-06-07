@@ -103,7 +103,8 @@ class App extends Component {
               else
                 this._startSong()
             }}
-            style={{padding:'10px', 'fontSize':'40px', backgroundColor: 'black', color: 'white'}}>
+            class='Button'
+            style={{padding:'10px 50px 10px 50px'}}>
             {this.state.soundButtonText}
           </button></h3>
           <TrackImg track = { this.state.response.items[this.state.index].track } />

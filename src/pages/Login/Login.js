@@ -7,13 +7,16 @@ class Login extends Component {
 
     return (
     <div className="App">
-        <button onClick = { ()=> {
+        <a 
+        type="button"
+        onClick = { ()=> {
             window.location= window.location.href.indexOf("localhost") > -1 
             ? 'http://localhost:8888/login' 
             : 'http://blind-spotify-backend.herokuapp.com/login'
           }}
-          style={{padding:'10px', 'fontSize':'40px', backgroundColor: 'black', color: 'white'}
-        }> Sign in to spotify </button>
+          class='Button'
+          style={{padding:'10px 50px 10px 50px', fontWeight: '700', letterSpacing: '2px'}}>
+          SIGN IN TO SPOTIFY </a>
     </div>
     );
   }
