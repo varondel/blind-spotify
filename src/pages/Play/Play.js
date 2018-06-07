@@ -3,11 +3,14 @@ import './Play.css';
 import queryString from 'query-string';
 import Sound from 'react-sound';
 
-
 var trackList = null
+const buttonStyleList = {
+  'default': {backgroundColor: 'black'},
+  'wrong':{backgroundColor: 'red'},
+  'correct':{backgroundColor: 'green'}
+}
 
 class TrackImg extends Component {
-    
     render() {
       if (!this.props.track || !this.props.track.album) return null;
   
@@ -20,6 +23,27 @@ class TrackImg extends Component {
     }
   }
 
+  class ButtonChoice extends Component {
+    render() {
+      var buttonStyle = {}
+      if (this.props.state === "choosing")
+        buttonStyle = buttonStyleList.default
+      else
+        buttonStyle = this.props.choice ? buttonStyleList.correct : buttonStyleList.wrong
+
+      return(
+        <h3 style={{display: 'inline-block'}}><a 
+          type="button"
+          onClick={()=> {this.props.callback(this.props.buttonIndex)}}
+          class='Button'
+          style={{...buttonStyle, padding:'10px 50px 10px 50px'}}>
+          {this.props.track.name}
+        </a></h3>
+      )
+    }
+  }
+
+
 class App extends Component {
 
   constructor() {
@@ -28,7 +52,8 @@ class App extends Component {
       tracksChoice: [],
       rightChoice: 0,
       soundStatus: Sound.status.STOPPED,
-      soundButtonText: "Play !"
+      soundButtonText: "Play !",
+      gameState: 'choosing'
     };
   }
    
@@ -57,12 +82,12 @@ class App extends Component {
         if (response.total) {
             //this.setState({response: response })
             trackList = response
-            this._chooseSong()
+            this._chooseRandomTracks()
         }
       })
   }
 
-  _chooseSong = () => {
+  _chooseRandomTracks = () => {
     //Pick 3 distinct random track
     var indexPool = []
     for (var i = 0; i < trackList.items.length; i++) {
@@ -81,6 +106,7 @@ class App extends Component {
 
     //Update buttons
     this.setState({
+      gameState: "choosing",
       tracksChoice: chosenTrackIndex, 
       rightChoice: rightChoice
     })
@@ -101,9 +127,9 @@ class App extends Component {
   //When user select an answer
   _onChoose = (buttonIndex) => {
     if (buttonIndex === this.state.rightChoice)
-      this.setState({answer: true})
+      this.setState({answer: true, gameState: 'chosen'})
     else 
-      this.setState({answer: false})
+      this.setState({answer: false, gameState: 'chosen'})
   }
   
   render() {
@@ -113,43 +139,54 @@ class App extends Component {
 
     return (
       <div className="App">
-        <div>
-          <h3><a 
-            onClick={()=> {this._onChoose(0)}}
-            class='Button'
-            style={{padding:'10px 50px 10px 50px'}}>>
-            {trackList.items[this.state.tracksChoice[0]].track.name}
-          </a></h3>
-          <h3><a 
-            onClick={()=> {this._onChoose(1)}}
-            class='Button'
-            style={{padding:'10px 50px 10px 50px'}}>>
-            {trackList.items[this.state.tracksChoice[1]].track.name}
-          </a></h3>
-          <h3><a 
-            onClick={()=> {this._onChoose(2)}}
-            class='Button'
-            style={{padding:'10px 50px 10px 50px'}}>>
-            {trackList.items[this.state.tracksChoice[2]].track.name}
-          </a></h3>
-          <h3><a onClick={()=>
-            {
-              if(this.state.soundStatus === Sound.status.PLAYING)
-                this._pauseSong()
-              else
-                this._startSong()
-            }}
-            class='Button'
-            style={{padding:'10px 50px 10px 50px'}}>
-            {this.state.soundButtonText}
-          </a></h3>
-          <TrackImg track = { trackList.items[this.state.tracksChoice[this.state.rightChoice]].track } />
-          <Sound
-            url = {trackList.items[this.state.tracksChoice[this.state.rightChoice]].track.preview_url}
-            playStatus={this.state.soundStatus}
-            onFinishedPlaying={this._onFinish}
-          />
+        <h3> Which song is it ? </h3>
+        <div style={{display: 'inline-block'}}>
+          <ButtonChoice 
+            buttonIndex = "0"
+            state = {this.state.gameState} 
+            track = {trackList.items[this.state.tracksChoice[0]].track} 
+            choice = {0 === this.state.rightChoice}
+            callback = {this._onChoose}/>
+          <ButtonChoice
+            buttonIndex = "1"
+            state = {this.state.gameState}
+            track = {trackList.items[this.state.tracksChoice[1]].track}
+            choice = {1 === this.state.rightChoice}
+            callback = {this._onChoose}/>
+          <ButtonChoice
+            buttonIndex = "2"
+            state = {this.state.gameState}
+            track = {trackList.items[this.state.tracksChoice[2]].track}
+            choice = {2 === this.state.rightChoice}
+            callback = {this._onChoose}/>
         </div>
+        <h2 display = 'inline-block'><a onClick={()=>
+          {
+            if(this.state.soundStatus === Sound.status.PLAYING)
+              this._pauseSong()
+            else
+              this._startSong()
+          }}
+          class='Button'
+          style={{padding:'10px 50px 10px 50px'}}>
+          {this.state.soundButtonText}
+        </a></h2>
+        {this.state.gameState === "chosen" &&
+        <h2 display = 'inline-block'><a onClick={()=>
+          {
+            this._chooseRandomTracks()
+          }}
+          class='Button'
+          style={{padding:'10px 50px 10px 50px'}}>
+          Next song !
+        </a></h2>
+        }
+        <TrackImg track = { trackList.items[this.state.tracksChoice[this.state.rightChoice]].track } />
+        <Sound
+          url = {trackList.items[this.state.tracksChoice[this.state.rightChoice]].track.preview_url}
+          playStatus={this.state.soundStatus}
+          onFinishedPlaying={this._onFinish}
+        />
       </div>
     );
   }
