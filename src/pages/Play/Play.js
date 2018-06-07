@@ -35,7 +35,7 @@ class TrackImg extends Component {
         <h3 style={{display: 'inline-block'}}><a 
           type="button"
           onClick={()=> {this.props.callback(this.props.buttonIndex)}}
-          class='Button'
+          className='Button'
           style={{...buttonStyle, padding:'10px 50px 10px 50px'}}>
           {this.props.track.name}
         </a></h3>
@@ -53,7 +53,8 @@ class App extends Component {
       rightChoice: 0,
       soundStatus: Sound.status.STOPPED,
       soundButtonText: "Play !",
-      gameState: 'choosing'
+      gameState: 'choosing',
+      answer:false
     };
   }
    
@@ -80,7 +81,6 @@ class App extends Component {
       .then((response) => {
         console.log(response)
         if (response.total) {
-            //this.setState({response: response })
             trackList = response
             this._chooseRandomTracks()
         }
@@ -90,11 +90,11 @@ class App extends Component {
   _chooseRandomTracks = () => {
     //Pick 3 distinct random track
     var indexPool = []
-    for (var i = 0; i < trackList.items.length; i++) {
+    for (let i = 0; i < trackList.items.length; i++) {
       indexPool[i] = i
     }
     var chosenTrackIndex = []
-    for (i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       var randomIndex = Math.round(Math.random() * (indexPool.length - 1))
       
       chosenTrackIndex[i] = indexPool[randomIndex]
@@ -112,6 +112,7 @@ class App extends Component {
     })
   }
 
+  // Song player button callbacks
   _startSong = () => {
     this.setState({soundStatus:Sound.status.PLAYING, soundButtonText: "Pause"})
   }
@@ -139,27 +140,34 @@ class App extends Component {
 
     return (
       <div className="App">
-        <h3> Which song is it ? </h3>
-        <div style={{display: 'inline-block'}}>
+        <h3> {
+          this.state.gameState === "choosing" 
+          ? "Which song is it ?" 
+          : (
+            this.state.answer === true ? "Bravo !" : "Raté !"
+          )
+          } </h3>
+        <div>
           <ButtonChoice 
-            buttonIndex = "0"
+            buttonIndex = {0}
             state = {this.state.gameState} 
             track = {trackList.items[this.state.tracksChoice[0]].track} 
             choice = {0 === this.state.rightChoice}
             callback = {this._onChoose}/>
           <ButtonChoice
-            buttonIndex = "1"
+            buttonIndex = {1}
             state = {this.state.gameState}
             track = {trackList.items[this.state.tracksChoice[1]].track}
             choice = {1 === this.state.rightChoice}
             callback = {this._onChoose}/>
           <ButtonChoice
-            buttonIndex = "2"
+            buttonIndex = {2}
             state = {this.state.gameState}
             track = {trackList.items[this.state.tracksChoice[2]].track}
             choice = {2 === this.state.rightChoice}
             callback = {this._onChoose}/>
         </div>
+{/* Song player button */}
         <h2 display = 'inline-block'><a onClick={()=>
           {
             if(this.state.soundStatus === Sound.status.PLAYING)
@@ -167,16 +175,17 @@ class App extends Component {
             else
               this._startSong()
           }}
-          class='Button'
+          className='Button'
           style={{padding:'10px 50px 10px 50px'}}>
           {this.state.soundButtonText}
         </a></h2>
+{/* Next song button appears onyl after user chosed an answer */}
         {this.state.gameState === "chosen" &&
         <h2 display = 'inline-block'><a onClick={()=>
           {
             this._chooseRandomTracks()
           }}
-          class='Button'
+          className='Button'
           style={{padding:'10px 50px 10px 50px'}}>
           Next song !
         </a></h2>
