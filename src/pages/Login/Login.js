@@ -14,7 +14,7 @@ class Login extends Component {
             ? 'http://localhost:8888/login' 
             : 'http://blind-spotify-backend.herokuapp.com/login'
           }}
-          class='Button'
+          className='Button'
           style={{padding:'10px 50px 10px 50px', fontWeight: '700', letterSpacing: '2px'}}>
           SIGN IN TO SPOTIFY </a>
     </div>

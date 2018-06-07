@@ -3,6 +3,9 @@ import './Play.css';
 import queryString from 'query-string';
 import Sound from 'react-sound';
 
+
+var trackList = null
+
 class TrackImg extends Component {
     
     render() {
@@ -22,12 +25,8 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      text: "Bonjour",
-      response: {},
-      index: 1,
-      precedent: "None",
-      following: "",
-      currentTrackId: 0,
+      tracksChoice: [],
+      rightChoice: 0,
       soundStatus: Sound.status.STOPPED,
       soundButtonText: "Play !"
     };
@@ -56,21 +55,35 @@ class App extends Component {
       .then((response) => {
         console.log(response)
         if (response.total) {
-            this.setState({response: response })
+            //this.setState({response: response })
+            trackList = response
             this._chooseSong()
         }
       })
   }
 
   _chooseSong = () => {
-    this.setState({ index: Math.floor(Math.random() * this.state.response.items.length)})
-    var index = this.state.index
-    console.log(index)
-    
-    var previewIndex = index > 0 ? index - 1 : this.state.response.total - 1
-    this.setState({precedent: this.state.response.items[previewIndex].track.name})
-    var followIndex = (index + 1) % this.state.response.total
-    this.setState({following: this.state.response.items[followIndex].track.name})
+    //Pick 3 distinct random track
+    var indexPool = []
+    for (var i = 0; i < trackList.items.length; i++) {
+      indexPool[i] = i
+    }
+    var chosenTrackIndex = []
+    for (i = 0; i < 3; i++) {
+      var randomIndex = Math.round(Math.random() * (indexPool.length - 1))
+      
+      chosenTrackIndex[i] = indexPool[randomIndex]
+      indexPool[randomIndex] = indexPool.pop() //Replace chosen index with last element
+    }
+
+    //Choose right answer
+    var rightChoice = Math.round(Math.random() * (chosenTrackIndex.length - 1))
+
+    //Update buttons
+    this.setState({
+      tracksChoice: chosenTrackIndex, 
+      rightChoice: rightChoice
+    })
   }
 
   _startSong = () => {
@@ -84,19 +97,42 @@ class App extends Component {
   _onFinish = () => {
     this.setState({soundStatus:Sound.status.STOPPED, soundButtonText: "Replay ?"})
   }
+
+  //When user select an answer
+  _onChoose = (buttonIndex) => {
+    if (buttonIndex === this.state.rightChoice)
+      this.setState({answer: true})
+    else 
+      this.setState({answer: false})
+  }
   
   render() {
-    if (!this.state.response.total)
+    if (!trackList || trackList.items.length < 3 )
     return (
-      <div className="App"> No Data </div>);
+      <div className="App"> You need at least 3 Tracks in your Spotify to play </div>);
 
     return (
       <div className="App">
         <div>
-          <h3> {"precedent : " + this.state.precedent } </h3>
-          <h3> { "following : " + this.state.following } </h3>
-          <h3> { this.state.response.items[this.state.index].track.name } </h3>
-          <h3><button onClick={()=>
+          <h3><a 
+            onClick={()=> {this._onChoose(0)}}
+            class='Button'
+            style={{padding:'10px 50px 10px 50px'}}>>
+            {trackList.items[this.state.tracksChoice[0]].track.name}
+          </a></h3>
+          <h3><a 
+            onClick={()=> {this._onChoose(1)}}
+            class='Button'
+            style={{padding:'10px 50px 10px 50px'}}>>
+            {trackList.items[this.state.tracksChoice[1]].track.name}
+          </a></h3>
+          <h3><a 
+            onClick={()=> {this._onChoose(2)}}
+            class='Button'
+            style={{padding:'10px 50px 10px 50px'}}>>
+            {trackList.items[this.state.tracksChoice[2]].track.name}
+          </a></h3>
+          <h3><a onClick={()=>
             {
               if(this.state.soundStatus === Sound.status.PLAYING)
                 this._pauseSong()
@@ -106,10 +142,10 @@ class App extends Component {
             class='Button'
             style={{padding:'10px 50px 10px 50px'}}>
             {this.state.soundButtonText}
-          </button></h3>
-          <TrackImg track = { this.state.response.items[this.state.index].track } />
+          </a></h3>
+          <TrackImg track = { trackList.items[this.state.tracksChoice[this.state.rightChoice]].track } />
           <Sound
-            url = {this.state.response.items[this.state.index].track.preview_url}
+            url = {trackList.items[this.state.tracksChoice[this.state.rightChoice]].track.preview_url}
             playStatus={this.state.soundStatus}
             onFinishedPlaying={this._onFinish}
           />
