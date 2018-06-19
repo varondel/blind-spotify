@@ -3,7 +3,12 @@ import './Play.css';
 import queryString from 'query-string';
 import Sound from 'react-sound';
 
+import openSocket from 'socket.io-client';
+
+
 var trackList = null
+var socket = null
+
 const buttonStyleList = {
   'default': {backgroundColor: 'black'},
   'wrong':{backgroundColor: 'red'},
@@ -52,7 +57,7 @@ class App extends Component {
       tracksChoice: [],
       rightChoice: 0,
       soundStatus: Sound.status.STOPPED,
-      soundButtonText: "Play !",
+      soundButtonText: "Ready !",
       gameState: 'choosing',
       answer:false
     };
@@ -81,13 +86,27 @@ class App extends Component {
       .then((response) => {
         console.log(response)
         if (response.total) {
-            trackList = response
-            this._chooseRandomTracks()
+
+          trackList = response
+          this.setState({gameState: "waiting"})
+
+          socket = openSocket('http://localhost:8888');
+
+          socket.on('pick', () => {
+            var songsData = this._chooseRandomTracks()
+            socket.emit('pick', songsData)
+          })
+
+          socket.on('play', (songsData) => {
+            console.log('Playing !')
+            this._startSong(songsData)
+          })
         }
       })
   }
 
-  _chooseRandomTracks = () => {
+  _chooseRandomTracks() {
+    console.log('Picking !')
     //Pick 3 distinct random track
     var indexPool = []
     for (let i = 0; i < trackList.items.length; i++) {
@@ -101,24 +120,45 @@ class App extends Component {
       indexPool[randomIndex] = indexPool.pop() //Replace chosen index with last element
     }
 
+    //Copy chosen tracks
+    var chosenTracks = []
+    for (let i = 0; i < 3; i++) {
+      chosenTracks[i] = trackList.items[chosenTrackIndex[i]].track
+    }
+
     //Choose right answer
     var rightChoice = Math.round(Math.random() * (chosenTrackIndex.length - 1))
 
+    var songsData = {
+      chosenTracks: chosenTracks,
+      rightChoice: rightChoice
+    }
+
     //Update buttons
     this.setState({
-      gameState: "choosing",
-      tracksChoice: chosenTrackIndex, 
-      rightChoice: rightChoice
+      tracksChoice: chosenTrackIndex,
+      rightChoice: rightChoice,
+      songsData: songsData
     })
+
+    return songsData
   }
 
   // Song player button callbacks
-  _startSong = () => {
-    this.setState({soundStatus:Sound.status.PLAYING, soundButtonText: "Pause"})
+  _startSong = (songsData) => {
+    this.setState({gameState: "choosing", songsData:songsData, soundStatus:Sound.status.PLAYING, soundButtonText: "Pause"})
+  }
+
+  _onReady = () => {
+    socket.emit('ready', this.state.songsData)
   }
 
   _pauseSong = () => {
     this.setState({soundStatus:Sound.status.PAUSED, soundButtonText: "Play !"})
+  }
+
+  _onLoading = (info) => {
+    console.log('Duration loaded' + info.duration)
   }
 
   _onFinish = () => {
@@ -135,8 +175,8 @@ class App extends Component {
   
   render() {
     if (!trackList || trackList.items.length < 3 )
-    return (
-      <div className="App"> You need at least 3 Tracks in your Spotify to play </div>);
+      return (
+        <div className="App"> You need at least 3 Tracks in your Spotify to play </div>);
 
     return (
       <div className="App">
@@ -147,33 +187,36 @@ class App extends Component {
             this.state.answer === true ? "Bravo !" : "Raté !"
           )
           } </h3>
+        {this.state.gameState === "choosing" &&
         <div>
           <ButtonChoice 
             buttonIndex = {0}
             state = {this.state.gameState} 
-            track = {trackList.items[this.state.tracksChoice[0]].track} 
+            track = {this.state.songsData.chosenTracks[0]} 
             choice = {0 === this.state.rightChoice}
             callback = {this._onChoose}/>
           <ButtonChoice
             buttonIndex = {1}
             state = {this.state.gameState}
-            track = {trackList.items[this.state.tracksChoice[1]].track}
+            track = {this.state.songsData.chosenTracks[1]}
             choice = {1 === this.state.rightChoice}
             callback = {this._onChoose}/>
           <ButtonChoice
             buttonIndex = {2}
             state = {this.state.gameState}
-            track = {trackList.items[this.state.tracksChoice[2]].track}
+            track = {this.state.songsData.chosenTracks[2]}
             choice = {2 === this.state.rightChoice}
             callback = {this._onChoose}/>
         </div>
+        }
 {/* Song player button */}
         <h2 display = 'inline-block'><a onClick={()=>
           {
-            if(this.state.soundStatus === Sound.status.PLAYING)
+            /*if(this.state.soundStatus === Sound.status.PLAYING)
               this._pauseSong()
             else
-              this._startSong()
+              this._startSong()*/
+            this._onReady()
           }}
           className='Button'
           style={{padding:'10px 50px 10px 50px'}}>
@@ -190,12 +233,17 @@ class App extends Component {
           Next song !
         </a></h2>
         }
-        <TrackImg track = { trackList.items[this.state.tracksChoice[this.state.rightChoice]].track } />
+        {this.state.gameState !== "waiting" &&
+        <div>
+        <TrackImg track = { this.state.songsData.chosenTracks[this.state.songsData.rightChoice] } />
         <Sound
-          url = {trackList.items[this.state.tracksChoice[this.state.rightChoice]].track.preview_url}
+          url = { this.state.songsData.chosenTracks[this.state.songsData.rightChoice].preview_url }
+          onLoading={this._onLoading}
           playStatus={this.state.soundStatus}
           onFinishedPlaying={this._onFinish}
         />
+        </div>
+        }
       </div>
     );
   }
