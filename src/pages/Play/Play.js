@@ -12,7 +12,8 @@ var socket = null
 const buttonStyleList = {
   'default': {backgroundColor: 'black'},
   'wrong':{backgroundColor: 'red'},
-  'correct':{backgroundColor: 'green'}
+  'correct':{backgroundColor: 'green'},
+  'picked':{border: 'solid', borderWidth: 'thick', borderColor: 'black'}
 }
 
 class TrackImg extends Component {
@@ -34,7 +35,13 @@ class TrackImg extends Component {
       if (this.props.state === "choosing")
         buttonStyle = buttonStyleList.default
       else
-        buttonStyle = this.props.choice ? buttonStyleList.correct : buttonStyleList.wrong
+        buttonStyle = this.props.isRightChoice ? buttonStyleList.correct : buttonStyleList.wrong
+
+      if (this.props.isPicked) {
+        Object.keys(buttonStyleList.picked).forEach(function (key) {
+          buttonStyle[key] = buttonStyleList.picked[key]
+       });
+      }
 
       return(
         <h3 style={{display: 'inline-block'}}><a 
@@ -58,7 +65,7 @@ class App extends Component {
       rightChoice: 0,
       soundStatus: Sound.status.STOPPED,
       soundButtonText: "Ready !",
-      gameState: 'choosing',
+      gameState: 'waitingPlayer',
       answer:false
     };
   }
@@ -88,7 +95,7 @@ class App extends Component {
         if (response.total) {
 
           trackList = response
-          this.setState({gameState: "waiting"})
+          this.setState({gameState: "waitingPlayer"})
 
           socket = openSocket('http://localhost:8888');
 
@@ -146,7 +153,13 @@ class App extends Component {
 
   // Song player button callbacks
   _startSong = (songsData) => {
-    this.setState({gameState: "choosing", songsData:songsData, soundStatus:Sound.status.PLAYING, soundButtonText: "Pause"})
+    //Listening for other player answer
+    socket.on('otherAnswer', (buttonIndex) => {
+      this._onAnswerPicked(buttonIndex)
+    })
+
+    //Start song
+    this.setState({gameState: "choosing", songsData:songsData, pickedIndex: null, soundStatus:Sound.status.PLAYING, soundButtonText: "Pause"})
   }
 
   _onReady = () => {
@@ -167,10 +180,18 @@ class App extends Component {
 
   //When user select an answer
   _onChoose = (buttonIndex) => {
-    if (buttonIndex === this.state.rightChoice)
-      this.setState({answer: true, gameState: 'chosen'})
+    socket.emit('answer', buttonIndex)
+
+    socket.on('answer', (buttonIndex) => {
+      this._onAnswerPicked(buttonIndex)
+    })
+  }
+
+  _onAnswerPicked = (buttonIndex) => {
+    if (buttonIndex === this.state.songsData.rightChoice)
+      this.setState({answer: true, gameState: 'chosen', pickedIndex: buttonIndex})
     else 
-      this.setState({answer: false, gameState: 'chosen'})
+      this.setState({answer: false, gameState: 'chosen', pickedIndex: buttonIndex})
   }
   
   render() {
@@ -187,25 +208,28 @@ class App extends Component {
             this.state.answer === true ? "Bravo !" : "Raté !"
           )
           } </h3>
-        {this.state.gameState === "choosing" &&
+        {(this.state.gameState === "choosing" || this.state.gameState === "chosen") &&
         <div>
           <ButtonChoice 
             buttonIndex = {0}
             state = {this.state.gameState} 
             track = {this.state.songsData.chosenTracks[0]} 
-            choice = {0 === this.state.rightChoice}
+            isRightChoice = {0 === this.state.songsData.rightChoice}
+            isPicked = {0 === this.state.pickedIndex}
             callback = {this._onChoose}/>
           <ButtonChoice
             buttonIndex = {1}
             state = {this.state.gameState}
             track = {this.state.songsData.chosenTracks[1]}
-            choice = {1 === this.state.rightChoice}
+            isRightChoice = {1 === this.state.songsData.rightChoice}
+            isPicked = {1 === this.state.pickedIndex}
             callback = {this._onChoose}/>
           <ButtonChoice
             buttonIndex = {2}
             state = {this.state.gameState}
             track = {this.state.songsData.chosenTracks[2]}
-            choice = {2 === this.state.rightChoice}
+            isRightChoice = {2 === this.state.songsData.rightChoice}
+            isPicked = {2 === this.state.pickedIndex}
             callback = {this._onChoose}/>
         </div>
         }
@@ -226,14 +250,14 @@ class App extends Component {
         {this.state.gameState === "chosen" &&
         <h2 display = 'inline-block'><a onClick={()=>
           {
-            this._chooseRandomTracks()
+            //this._chooseRandomTracks()
           }}
           className='Button'
           style={{padding:'10px 50px 10px 50px'}}>
           Next song !
         </a></h2>
         }
-        {this.state.gameState !== "waiting" &&
+        {this.state.gameState !== "waitingPlayer" &&
         <div>
         <TrackImg track = { this.state.songsData.chosenTracks[this.state.songsData.rightChoice] } />
         <Sound
