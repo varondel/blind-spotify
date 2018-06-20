@@ -51,8 +51,8 @@ class App extends Component {
           trackList = response
           this.setState({gameState: "waitingPlayer"})
 
-          socket = io('https://blind-spotify-backend.herokuapp.com:80');
-          console.log("Socket Id " + socket.id)
+          var URL = 'https://blind-spotify-backend.herokuapp.com:80'
+          socket = io(URL);
 
           // Listen if client is chosen to pick a song
           socket.on('pick', () => {
@@ -179,17 +179,6 @@ class App extends Component {
 
     return (
       <div className="App">
-        
-{/* Feedback */}
-{/*
-        <h3> {
-          this.state.gameState === "choosing" 
-          ? "Which song is it ?" 
-          : (
-            this.state.answer === true ? "Bravo !" : "Raté !"
-          )
-          } </h3>
-*/}
 {/* Choices button */}
         {(this.state.gameState === "choosing" || this.state.gameState === "chosen") &&
         <div>
