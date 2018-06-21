@@ -12,7 +12,7 @@ class Login extends Component {
         onClick = { ()=> {
             window.location= window.location.href.indexOf("localhost") > -1 
             ? 'http://localhost:8888/login' 
-            : 'https://blind-spotify-backend.herokuapp.com/login'
+            : 'http://blind-spotify-backend.herokuapp.com/login'
           }}
           className='Button'
           style={{padding:'10px 50px 10px 50px', fontWeight: '700', letterSpacing: '2px'}}>
