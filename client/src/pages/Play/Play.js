@@ -105,7 +105,7 @@ class App extends Component {
   // Start playing
   _startSong = (songsData) => {
     // Listening for other player choice
-    socket.on('otherAnswer', (buttonIndex) => {
+    socket.once('otherAnswer', (buttonIndex) => {
       this._onAnswerPicked(buttonIndex)
     })
 
@@ -140,12 +140,13 @@ class App extends Component {
     // Inform server of client choice
     socket.emit('answer', buttonIndex)
 
-    socket.on('answer', (buttonIndex) => {
+    socket.once('answer', (buttonIndex) => {
       this._onAnswerPicked(buttonIndex)
     })
   }
 
   _onAnswerPicked = (buttonIndex) => {
+    console.log("Answer Picked !")
     var answer
     if (buttonIndex === this.state.songsData.rightChoice)
       answer = true

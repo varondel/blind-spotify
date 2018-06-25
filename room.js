@@ -13,7 +13,7 @@ class Room {
         this.chooser = this.players[this.round % this.players.length]
         console.log("Emit Pick")
         this.chooser.emit('pick', '')
-        this.chooser.on('pick', (songData) => {
+        this.chooser.once('pick', (songData) => {
             this.players[0].emit('play', songData)
             this.players[1].emit('play', songData)
             this.gameState = "playing"
@@ -51,6 +51,8 @@ class Room {
         console.log("Answered_2")
         if (this.gameState != "playing")
             return
+        
+        this.gameState = "waiting"
 
         console.log("Answered_3")
         if (socket.id == this.players[0].id) {
@@ -62,7 +64,7 @@ class Room {
             this.players[0].emit("otherAnswer", data)
         }
 
-        this.gameState = "waiting"
+        
     }
     
 }
