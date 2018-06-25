@@ -14,14 +14,6 @@ app.use(express.static(path.join(__dirname, 'client/build')));
 var server = http.createServer(app)
 const io = require('socket.io').listen(server);
 
-// Put all API endpoints under '/api'
-app.get('/test', (req, res) => {
-  // Return them as json
-  res.json("TEST");
-
-  console.log(`TEST`);
-});
-
 // Quand un client se connecte, on le note dans la console
 io.sockets.on('connection', function (socket) {
   console.log('Un client est connecté !');
@@ -32,9 +24,9 @@ io.sockets.on('connection', function (socket) {
     roomUtils.onPlayerReady(socket)
   })
 
-  socket.on('answer', function(data) {
+  socket.on('answer', (data) => {
     console.log("Answered")
-    roomUtils.onPlayerAnswer(socket)
+    roomUtils.onPlayerAnswer(socket, data)
   })
 
 });

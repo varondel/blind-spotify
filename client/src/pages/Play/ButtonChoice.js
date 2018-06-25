@@ -13,22 +13,22 @@ class ButtonChoice extends Component {
 	  var buttonStyle = {}
 	  // Add background color if an answer was chosen
 	  if (this.props.state === "choosing")
-		buttonStyle =  Object.assign(buttonStyle, buttonStyleList.default)
+			buttonStyle =  Object.assign(buttonStyle, buttonStyleList.default)
 	  else
-		buttonStyle = this.props.isRightChoice ? Object.assign(buttonStyle, buttonStyleList.correct) : Object.assign(buttonStyle, buttonStyleList.wrong)
+			buttonStyle = this.props.isRightChoice ? Object.assign(buttonStyle, buttonStyleList.correct) : Object.assign(buttonStyle, buttonStyleList.wrong)
 	  // Add border if button was clicked
 	  if (this.props.isPicked) {
-		buttonStyle = Object.assign(buttonStyle, buttonStyleList.picked)
+			buttonStyle = Object.assign(buttonStyle, buttonStyleList.picked)
 	  }
 
 	  return(
-		<h3 style={{display: 'inline-block'}}><a 
-		  type="button"
-		  onClick={()=> {this.props.callback(this.props.buttonIndex)}}
-		  className='Button'
-		  style={{...buttonStyle, padding:'10px 50px 10px 50px'}}>
-		  {this.props.track.name}
-		</a></h3>
+			<h3 style={{display: 'inline-block'}}><a 
+				type="button"
+				onClick={()=> {this.props.callback(this.props.buttonIndex)}}
+				className='Button'
+				style={{...buttonStyle, padding:'10px 50px 10px 50px'}}>
+				{this.props.track.name}
+			</a></h3>
 	  )
 	}
 }

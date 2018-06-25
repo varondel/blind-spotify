@@ -61,6 +61,12 @@ class App extends Component {
             socket.emit('pick', songsData)
           })
 
+          // Listening for other player choice
+          socket.on('otherAnswer', (buttonIndex) => {
+            console.log("Other Answer !" + buttonIndex)
+            this._onAnswerPicked(buttonIndex)
+          })
+
           // Listen for songs choices
           socket.on('play', (songsData) => {
             console.log('Playing !')
@@ -92,7 +98,7 @@ class App extends Component {
     }
 
     // Choose right answer
-    var rightChoice = Math.round(Math.random() * (chosenTrackIndex.length - 1))
+    var rightChoice = Math.round(Math.random() * (chosenTracks.length - 1))
 
     var songsData = {
       chosenTracks: chosenTracks,
@@ -104,19 +110,16 @@ class App extends Component {
 
   // Start playing
   _startSong = (songsData) => {
-    // Listening for other player choice
-    socket.once('otherAnswer', (buttonIndex) => {
-      this._onAnswerPicked(buttonIndex)
-    })
-
     // Start song
     this.setState({gameState: "choosing", songsData:songsData, pickedIndex: null, soundStatus:Sound.status.PLAYING, soundButtonText: "Pause"})
   }
 
   // Player ready to play
   _onReady = () => {
-    socket.emit('ready', this.state.songsData)
-    this.setState({gameState: 'isReady'})
+    if (this.state.gameState !== 'isReady') {
+      this.setState({gameState: 'isReady'})
+      socket.emit('ready', this.state.songsData)
+    }
   }
 
   _playSong = () => {
@@ -140,13 +143,15 @@ class App extends Component {
     // Inform server of client choice
     socket.emit('answer', buttonIndex)
 
-    socket.once('answer', (buttonIndex) => {
+    socket.once('answer', () => {
+      console.log("Answer Picked !")
       this._onAnswerPicked(buttonIndex)
     })
   }
 
   _onAnswerPicked = (buttonIndex) => {
-    console.log("Answer Picked !")
+    socket.removeAllListeners("answer")
+
     var answer
     if (buttonIndex === this.state.songsData.rightChoice)
       answer = true
@@ -162,12 +167,10 @@ class App extends Component {
     this.intervalId = setInterval(() => {this._timer()}, 1000)
   }
 
-  _timer() {
-    console.log("Timer count")
-    
+  _timer() {    
     this.setState({timer: this.state.timer - 1})
 
-    if (this.state.timer === 0) {
+    if (this.state.timer <= 0) {
       console.log("clear")
       clearInterval(this.intervalId);
       socket.emit('ready')
