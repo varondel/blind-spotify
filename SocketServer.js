@@ -1,15 +1,16 @@
 const express = require('express');
 const socketIO = require('socket.io');
+var http = require('http');
 
 var RoomUtils = require('./roomUtils');
 var roomUtils = new RoomUtils()
 
 const PORT = process.env.PORT || 3006;
 
-const server = express()
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+let app = express()
 
-const io = socketIO(server);
+var server = http.createServer(app)
+const io = require('socket.io').listen(server);
 
 // Quand un client se connecte, on le note dans la console
 io.sockets.on('connection', function (socket) {
@@ -27,3 +28,5 @@ io.sockets.on('connection', function (socket) {
   })
 
 });
+
+server.listen(PORT, () => console.log(`Listening on ${ PORT }`));

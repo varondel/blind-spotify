@@ -51,8 +51,9 @@ class App extends Component {
           trackList = response
           this.setState({gameState: "waitingPlayer"})
 
-          //var URL = 'http://blind-spotify-backend.herokuapp.com'
-          socket = io("https://blind-spotify.herokuapp.com");
+          var URL = 'https://blind-spotify.herokuapp.com'
+          //var URL = 'http://localhost:3006'
+          socket = io.connect(URL);
 
           // Listen if client is chosen to pick a song
           socket.on('pick', () => {
